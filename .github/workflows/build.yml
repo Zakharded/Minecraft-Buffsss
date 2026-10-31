@@ -1,0 +1,28 @@
+name: build
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Get Forge MDK
+        run: |
+          curl -fL -o mdk.zip https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.3.1/forge-1.20.1-47.3.1-mdk.zip
+          unzip -q mdk.zip -d mdk
+      - name: Build
+        run: |
+          rm -rf mdk/src/main/java/com/example
+          cp -r src/. mdk/src/
+          cd mdk
+          sed -i 's/^mod_id=.*/mod_id=targetassist/' gradle.properties
+          sed -i 's/^mod_group_id=.*/mod_group_id=com.example.targetassist/' gradle.properties
+          chmod +x gradlew
+          ./gradlew build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-jar
+          path: mdk/build/libs/*.jar
